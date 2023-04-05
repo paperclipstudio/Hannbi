@@ -1,11 +1,95 @@
 const HAND_SIZE:usize = 5;
 mod Card;
-use std::num;
+use std::process::Command;
+use dialoguer::{
+    console::Term, 
+    theme::ColorfulTheme,
+    Select,
+    Input
+};
 
 use Card::Deck;
 
+
+fn helper() {
+    let my_hand: [Card::Card; 5] = [Card::Card::new((0, 0)); 5];
+    loop {
+        my_hand.iter().for_each(|c| c.print());
+    }
+}
+
+
+Hand = [Card::Card; 5];
+fn ask_number_or_suit(hand: Hand) -> Hand {
+    const num_or_suit: [&str; 2] = ["Number", "Suit"];
+    let info_type = Select::with_theme(&ColorfulTheme::default())
+        .items(&num_or_suit)
+        .default(0)
+        .interact_on_opt(&Term::stderr()).unwrap();
+    match info_type {
+        Some(0) => ask_which_number(hand),
+        Some(1) => ask_which_suit(hand),
+        Some(_) => ask_number_or_suit(hand),
+        None => ask_number_or_suit(hand)
+    }
+}
+
+fn ask_information_type(hand: Hand) -> Hand {
+    const INPUTS: [&str; 2] = ["Information", "Not Card"];
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .items(&INPUTS)
+        .default(0)
+        .interact_on_opt(&Term::stderr()).unwrap();
+    return match selection {
+        Some(0) => ask_number_or_suit(hand),
+        Some(1) => ask_what_card(hand),
+        _ => {
+            println!("Error");
+            ask_information_type(hand)
+        }
+    }
+}
+
+fn ask_what_card(hand: Hand) -> Hand {
+    const NUMBERS: [&str; 5] = ["0", "1", "2", "3", "4"];
+    const SUITS: [&str; 5] = ["Red", "Orange", "Yellow", "Green", "Blue"];
+    let number = Select::with_theme(&ColorfulTheme::default())
+        .items(&NUMBERS)
+        .default(0)
+        .interact()
+        .unwrap() as u8;
+    let suit = Select::with_theme(&ColorfulTheme::default())
+        .items(&SUITS)
+        .default(0)
+        .interact()
+        .unwrap() as u8;
+    return hand.map(|c| c.remove_option(&(number, suit)))
+}
+
+fn ask_which_number(hand: Hand) -> Hand {
+    const NUMBERS: [&str; 5] = ["0", "1", "2", "3", "4"];
+    match Select::with_theme(&ColorfulTheme::default()) .items(&NUMBERS).interact() {
+        Ok(suit) => hand.map(|c| c.learn_number(suit as u8)),
+        Err(e) => {
+            print!("Error {e}");
+            ask_which_number(hand)
+        }
+    }
+}
+
+fn ask_which_suit(hand: Hand) -> Hand {
+    const suits: [&str; 5] = ["Red", "Orange", "Yellow", "Green", "Blue"];
+    match Select::with_theme(&ColorfulTheme::default())
+        .items(&suits)
+        .default(0)
+        .interact() {
+        Ok(suit) => hand.map(|c| c.learn_suit(suit as u8)),
+        Err(_) => ask_which_suit(hand)
+        }
+
+}
+
 fn main() {
-    println!("Hello, world!");
     let mut deck = Deck::new().shuffle();
     let mut my_hand: [Card::Card; 5] = [Card::Card::new((0, 0)); 5];
     let mut your_hand: [Card::Card; 5] = [Card::Card::new((0, 0)); 5];
@@ -13,44 +97,35 @@ fn main() {
         print!("Pulling card {}", i);
         my_hand[i] = deck.pull().unwrap();
         your_hand[i] = deck.pull().unwrap();
-}
-    for mut card in your_hand {
-        card.is_number(card.value().0.clone());
-        card.is_suit(card.value().1.clone());
-        for i in 0..5 {
-            let mut my_card = my_hand[i];
-            my_card.remove_option(card.value());
-            my_hand[i] = my_card
-        }
-        print!("--\n");
-        card.print();
     }
+    
+    your_hand.map(|card| {
+            my_hand = my_hand.map(|c| c.remove_option(&card.value()));
+            card.is_value(*card.value())
+        });
 
-    let (number1, suit1) = my_hand[0].value().clone();
-    let (number2, suit2) = my_hand[1].value().clone();
-
+    let (number1, _) = my_hand[0].value().clone();
+    let (_, suit2) = my_hand[1].value().clone();
+    
+    my_hand.iter()
+        .map(|c| c.learn_number(number1))   
+        .map(|c| c.learn_suit(suit2))
+        .for_each(|c| c.print());
+    // Drawing 5 new cards  
+    //
     for i in 0..5 {
-        let mut my_card = my_hand[i];
-        let (card_number, card_value) = my_card.value().clone();
-        if number1 == card_number {
-            my_card.is_number(number1)
-        } else {
-            my_card.remove_number(number1)
-        }
-
-        if suit2 == card_value {
-            my_card.is_suit(suit2)
-        } else {
-            my_card.remove_suit(suit2)
-        }
-        my_hand[i] = my_card
+        my_hand[i] = deck.pull().unwrap();
     }
 
-
-    for my_card in my_hand {
-        my_card.print();
+    loop {
+        match Command::new("clear").output() {
+            Ok(m) => println!("{:?}", m),
+            Err(e) => println!("Error: {}", e),
+        };
+        my_hand.map(|c| c.print());
+        my_hand = ask_information_type(my_hand);
     }
-
+    
 }
 
 struct Game {

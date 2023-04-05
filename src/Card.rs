@@ -2,6 +2,8 @@ const HAND_SIZE: usize = 5;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
+const SUITS: [&str;5] = ["Red", "Orange", "Yellow", "Green", "Blue"];
+
 #[derive(Clone, Copy)]
 pub struct Hand {
     pub cards : [Card; HAND_SIZE] 
@@ -72,43 +74,67 @@ impl Card {
     pub fn value(&self) -> &CardValue {
         &self.value
     }
+    
 
-
-    pub fn remove_option(&mut self, value: &CardValue) {
+    pub fn remove_option(mut self, value: &CardValue) -> Self {
         let (number, suit) = value;
-        self.options &= !((Card::ONE << number) & (Card::RED << (5 * suit)));
+            self.options &= !((Card::ONE << number) & (Card::RED << (5 * suit)));
+        self
     }
 
-    pub fn remove_number(&mut self, number: u8) {
+    pub fn remove_number(mut self, number: u8) -> Self {
         if number < 5 {
             self.options &= !(Card::ONE << number); 
         } else {
             panic!()
         }
+        self
     }
-    pub fn remove_suit(&mut self, suit: u8) {
+    pub fn remove_suit(mut self, suit: u8) -> Self {
         if suit <= 4 {
             self.options &= !(Card::RED << (5 * suit))
         } else {
             panic!()
         }
+        self
     }
 
-    pub fn is_suit(&mut self, suit: u8) {
+    pub fn is_value(self, value: CardValue) -> Self {
+        self.is_suit(value.1).is_number(value.0)
+    }
+
+    pub fn is_suit(mut self, suit: u8) -> Self {
         if suit <= 4 {
             self.options &= Card::RED << (5 * suit)
         }
+        self
     }
 
-    pub fn is_number(&mut self, number: u8) {
+    pub fn is_number(mut self, number: u8) -> Self {
         if number < 5 {
             self.options &= Card::ONE << number;
         }
+        self
+    }
+
+    pub fn learn_suit(self, suit: u8) -> Self {
+        if self.value.1 == suit {
+            self.is_suit(suit)
+        } else {
+            self.remove_suit(suit)
+        }
     }
     
+    pub fn learn_number(self, number: u8) -> Self {
+        if self.value.0 == number {
+            self.is_number(number)
+        } else {
+            self.remove_number(number)
+        }
+    }
     pub fn print(&self) {
         let (num, suit) = self.value;
-        print!("\n{:?} of {:?}\n", suit, num);
+        print!("\n{:?} of {}\n", num, SUITS[suit as usize]);
         Self::print_option(self.options);
     }
 
@@ -118,7 +144,7 @@ impl Card {
                 if (options >> (n + (s * 5))) & 1 == 1 {
                     print!("██");
                 } else {
-                    print!("▏▕");
+                    print!("░░");
                 }
             }
             print!("\n");
