@@ -1,29 +1,27 @@
+#![allow(dead_code)]
 const HAND_SIZE:usize = 5;
-mod Card;
+mod card;
+use crate::card::Deck;
 use std::process::Command;
 use dialoguer::{
     console::Term, 
     theme::ColorfulTheme,
-    Select,
-    Input
+    Select
 };
 
-use Card::Deck;
-
-
 fn helper() {
-    let my_hand: [Card::Card; 5] = [Card::Card::new((0, 0)); 5];
+    let my_hand: [card::Card; 5] = [card::Card::new((0, 0)); 5];
     loop {
         my_hand.iter().for_each(|c| c.print());
     }
 }
 
 
-Hand = [Card::Card; 5];
+type Hand = [card::Card; 5];
 fn ask_number_or_suit(hand: Hand) -> Hand {
-    const num_or_suit: [&str; 2] = ["Number", "Suit"];
+    const NUM_OR_SUIT: [&str; 2] = ["Number", "Suit"];
     let info_type = Select::with_theme(&ColorfulTheme::default())
-        .items(&num_or_suit)
+        .items(&NUM_OR_SUIT)
         .default(0)
         .interact_on_opt(&Term::stderr()).unwrap();
     match info_type {
@@ -78,9 +76,9 @@ fn ask_which_number(hand: Hand) -> Hand {
 }
 
 fn ask_which_suit(hand: Hand) -> Hand {
-    const suits: [&str; 5] = ["Red", "Orange", "Yellow", "Green", "Blue"];
+    const SUITS: [&str; 5] = ["Red", "Orange", "Yellow", "Green", "Blue"];
     match Select::with_theme(&ColorfulTheme::default())
-        .items(&suits)
+        .items(&SUITS)
         .default(0)
         .interact() {
         Ok(suit) => hand.map(|c| c.learn_suit(suit as u8)),
@@ -91,8 +89,8 @@ fn ask_which_suit(hand: Hand) -> Hand {
 
 fn main() {
     let mut deck = Deck::new().shuffle();
-    let mut my_hand: [Card::Card; 5] = [Card::Card::new((0, 0)); 5];
-    let mut your_hand: [Card::Card; 5] = [Card::Card::new((0, 0)); 5];
+    let mut my_hand: [card::Card; 5] = [card::Card::new((0, 0)); 5];
+    let mut your_hand: [card::Card; 5] = [card::Card::new((0, 0)); 5];
     for i in 0..5 {
         print!("Pulling card {}", i);
         my_hand[i] = deck.pull().unwrap();
@@ -129,12 +127,12 @@ fn main() {
 }
 
 struct Game {
-    hands: [Card::Hand; HAND_SIZE],
+    hands: [card::Hand; HAND_SIZE],
     middle: [u8; 5],
     turn: usize,
     resource: u8,
     fuse: u8,
-    deck: Card::Deck,
+    deck: card::Deck,
 }
 
 impl Game {
@@ -143,23 +141,23 @@ impl Game {
         // Shuffle 
         // deal
         Game {
-            hands: [Card::Hand::new(); HAND_SIZE],
+            hands: [card::Hand::new(); HAND_SIZE],
             middle: [0;5],
             turn: 0,
             resource: 8,
             fuse: 2,
-            deck: Card::Deck::new(),
+            deck: card::Deck::new(),
         }
     }
 
 
     pub fn play(action:Action) {
        match action {
-           Action::Play(u8) => {
+           Action::Play(_u8) => {
            },
-           Action::Discard(u8) => {
+           Action::Discard(_u8) => {
            },
-           Action::GiveInformation(info) => {
+           Action::GiveInformation(_info) => {
            }
        }
     }
@@ -189,5 +187,4 @@ mod tests {
     fn setup() {
         let game = Game();
     }
-
 }

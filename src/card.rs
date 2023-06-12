@@ -31,8 +31,8 @@ pub struct Deck {
 impl Deck {
 
     pub fn new() -> Deck{
-        let suits:Vec<Suit> = vec!(Suit::Red, Suit::Yellow, Suit::White, Suit:: Blue, Suit::Green);
-        let numbers = vec!(Number::One, Number::Two, Number::Three, Number::Four, Number::Five);
+        let _suits:Vec<Suit> = vec!(Suit::Red, Suit::Yellow, Suit::White, Suit:: Blue, Suit::Green);
+        let _numbers = vec!(Number::One, Number::Two, Number::Three, Number::Four, Number::Five);
         let mut result = Vec::new();
         for number in 0..4 {
             for suit in 0..4 {
@@ -150,8 +150,6 @@ impl Card {
             print!("\n");
         }
     }
-
-
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
