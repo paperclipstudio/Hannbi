@@ -120,6 +120,10 @@ fn main() {
             Ok(m) => println!("{:?}", m),
             Err(e) => println!("Error: {}", e),
         };
+        let info: f32 = my_hand.iter()
+            .map(|card| card.missing_information_as_bits())
+            .sum();
+        println!("Missing information: {info}");
         my_hand.map(|c| c.print());
         my_hand = ask_information_type(my_hand);
     }

@@ -1,4 +1,5 @@
 const HAND_SIZE: usize = 5;
+
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -22,6 +23,12 @@ impl Hand {
             self.cards[i].print();
         }
     }
+
+    pub fn missing_information_as_bits(&self) -> f32 {
+        self.cards.iter()
+            .map(|card| card.missing_information_as_bits())
+            .sum() 
+    }
 }
 
 pub struct Deck {
@@ -29,7 +36,6 @@ pub struct Deck {
 }
 
 impl Deck {
-
     pub fn new() -> Deck{
         let _suits:Vec<Suit> = vec!(Suit::Red, Suit::Yellow, Suit::White, Suit:: Blue, Suit::Green);
         let _numbers = vec!(Number::One, Number::Two, Number::Three, Number::Four, Number::Five);
@@ -75,9 +81,16 @@ impl Card {
         &self.value
     }
 
-    pub fn total_information_as_bits(&self) -> f32 {
-        //f32::log2(state_counts);
-        return 0.0;
+    pub fn missing_information_as_bits(&self) -> f32 {
+        let mut state_counts = 0;
+        let mut options = self.options;
+        while options > 0 {
+            if options & 1 == 1 {
+                state_counts += 1;
+            }
+            options = options >> 1;
+        }
+        return f32::log2(state_counts as f32);
     }
     
 
@@ -205,9 +218,10 @@ mod test{
     use super::*;
     #[test]
     fn total_information(){
-        let card = Card::new((2,3));
+        let mut card = Card::new((2,3));
         // total bits of inforamtion of a card is ~4.6 bits
-        assert_eq!((card.total_information_as_bits() * 10.0).round(), 46.0)
-
+        assert_eq!((card.missing_information_as_bits() * 10.0).round(), 46.0);
+        card = card.is_value((2,3));
+        assert_eq!((card.missing_information_as_bits() * 10.0).round(), 0.0);
     }
 }
