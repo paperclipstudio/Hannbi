@@ -74,6 +74,11 @@ impl Card {
     pub fn value(&self) -> &CardValue {
         &self.value
     }
+
+    pub fn total_information_as_bits(&self) -> f32 {
+        //f32::log2(state_counts);
+        return 0.0;
+    }
     
 
     pub fn remove_option(mut self, value: &CardValue) -> Self {
@@ -191,5 +196,18 @@ impl Number {
             Number::Four,
             Number::Five
         ]
+    }
+}
+
+#[cfg(test)]
+
+mod test{
+    use super::*;
+    #[test]
+    fn total_information(){
+        let card = Card::new((2,3));
+        // total bits of inforamtion of a card is ~4.6 bits
+        assert_eq!((card.total_information_as_bits() * 10.0).round(), 46.0)
+
     }
 }
