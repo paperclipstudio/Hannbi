@@ -9,15 +9,47 @@ use dialoguer::{
     Select
 };
 
+enum Infomation {
+    Suit(card::Suit),
+    Number(card::Number),
+    NotCard((u8, u8))
+}
+
+type Hand = [card::Card; 5];
+fn how_much_info_gained(hand: Hand, info:Infomation) -> f32 {
+    use card::Card;
+    let before:f32 = hand.map(|c:Card| c.missing_information_as_bits()).iter().sum();
+    let after:f32  = apply_info(hand, info)
+        .map(|c:Card| c.missing_information_as_bits())
+        .iter().sum();
+    return before - after;
+
+}
+
+fn apply_info(hand: Hand, info:Infomation) -> Hand {
+    match info {
+        Infomation::Suit(suit) => {
+            hand.map(|c: card::Card|c.learn_suit(suit.as_u8()))
+        },
+        Infomation::Number(number) => {
+            hand.map(|c|c.learn_number(number.as_u8()))
+        },
+        Infomation::NotCard(card_value) => {
+            hand.map(|c|c.remove_option(&card_value))
+        }
+    }
+}
+
+
 fn helper() {
     let my_hand: [card::Card; 5] = [card::Card::new((0, 0)); 5];
+
     loop {
         my_hand.iter().for_each(|c| c.print());
     }
 }
 
 
-type Hand = [card::Card; 5];
 fn ask_number_or_suit(hand: Hand) -> Hand {
     const NUM_OR_SUIT: [&str; 2] = ["Number", "Suit"];
     let info_type = Select::with_theme(&ColorfulTheme::default())
@@ -109,8 +141,8 @@ fn main() {
         .map(|c| c.learn_number(number1))   
         .map(|c| c.learn_suit(suit2))
         .for_each(|c| c.print());
+
     // Drawing 5 new cards  
-    //
     for i in 0..5 {
         my_hand[i] = deck.pull().unwrap();
     }

@@ -189,6 +189,17 @@ impl Suit {
             Suit::Yellow
         ]
     }
+
+    pub fn as_u8(&self) -> u8 {
+        use Suit::*;
+        match self {
+            Red => 1,
+            Blue => 2,
+            White => 3,
+            Green => 4,
+            Yellow => 5
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -202,13 +213,25 @@ pub enum Number {
 
 impl Number {
     fn all() -> [Number; 5] {
+        use Number::*;
         return [
-            Number::One,
-            Number::Two,
-            Number::Three,
-            Number::Four,
-            Number::Five
+            One,
+            Two,
+            Three,
+            Four,
+            Five
         ]
+    }
+
+    pub fn as_u8(&self) -> u8 {
+        use Number::*;
+        return match self {
+            One => 1,
+            Two => 2,
+            Three => 3,
+            Four => 4,
+            Five => 5 // Wow such counting
+        }
     }
 }
 
