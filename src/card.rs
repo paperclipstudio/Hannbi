@@ -210,11 +210,11 @@ impl Suit {
     pub const fn as_u8(&self) -> u8 {
         use Suit::*;
         match self {
-            Red => 1,
-            Blue => 2,
-            White => 3,
-            Green => 4,
-            Yellow => 5
+            Red => 0,
+            Blue => 1,
+            White => 2,
+            Green => 3,
+            Yellow => 4
         }
     }
 

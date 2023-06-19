@@ -53,7 +53,7 @@ impl Hand {
     }
 
     fn print(&self) {
-        self.cards.map(|c| {c.print(); println!("Woror")});
+        self.cards.map(|c| c.print());
     }
 
     pub fn how_much_info_gained(self, info:Infomation) -> f32 {
@@ -126,11 +126,10 @@ fn ask_what_card(hand: Hand) -> Hand {
 
 fn ask_which_number(hand: Hand) -> Hand {
     use card::Number;
-    const NUMBERS: [&str; 5] = ["0", "1", "2", "3", "4"];
     let mut options: Vec<String> = Vec::new();
     for num in 0..5 {
         let info = hand.clone().how_much_info_gained(Infomation::Number(Number::all()[num]));
-        options.push(format!("{num}: {info}bits"))
+        options.push(format!("{num:5}: {info:.2}bits"))
     }
     match Select::with_theme(&ColorfulTheme::default())
     .items(&options).interact() {
@@ -143,9 +142,14 @@ fn ask_which_number(hand: Hand) -> Hand {
 }
 
 fn ask_which_suit(hand: Hand) -> Hand {
+    let mut options: Vec<String> = Vec::new();
+    for suit in 0..5 {
+        let info = hand.clone().how_much_info_gained(Infomation::Suit(Suit::all()[suit]));
+        let suit_as_str = Suit::all()[suit].as_str();
+        options.push(format!("{suit_as_str:6}: {info:.2}bits"))
+    }
     match Select::with_theme(&ColorfulTheme::default())
-        .items(&Suit::all().map(|s|s.as_str()))
-
+        .items(&options)
         .default(0)
         .interact() {
             Ok(suit) => hand.apply_info(Infomation::Suit(Suit::all()[suit])),
@@ -173,10 +177,6 @@ fn main() {
         println!("Missing information: {info}");
         my_hand.print();
         my_hand = ask_information_type(my_hand);
-        let bt = Backtrace::capture();
-        if bt.status() == BacktraceStatus::Captured {
-            print!("{}", bt);
-        }
     }
     
 }
