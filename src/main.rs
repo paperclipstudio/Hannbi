@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 const HAND_SIZE:usize = 5;
 mod card;
-use crate::card::Deck;
+use crate::card::{Deck, Suit};
 use std::process::Command;
+use card::Card;
 use dialoguer::{
     console::Term, 
     theme::ColorfulTheme,
@@ -15,30 +16,49 @@ enum Infomation {
     NotCard((u8, u8))
 }
 
-type Hand = [card::Card; 5];
-fn how_much_info_gained(hand: Hand, info:Infomation) -> f32 {
-    use card::Card;
-    let before:f32 = hand.map(|c:Card| c.missing_information_as_bits()).iter().sum();
-    let after:f32  = apply_info(hand, info)
-        .map(|c:Card| c.missing_information_as_bits())
-        .iter().sum();
-    return before - after;
-
+struct Hand {
+    cards: [card::Card; 5]
 }
 
-fn apply_info(hand: Hand, info:Infomation) -> Hand {
-    match info {
-        Infomation::Suit(suit) => {
-            hand.map(|c: card::Card|c.learn_suit(suit.as_u8()))
-        },
-        Infomation::Number(number) => {
-            hand.map(|c|c.learn_number(number.as_u8()))
-        },
-        Infomation::NotCard(card_value) => {
-            hand.map(|c|c.remove_option(&card_value))
+impl Hand {
+
+    fn new_from_deck(deck:&mut Deck) -> Option<Self> {
+        if deck.size() < HAND_SIZE {
+            return None
         }
+        Some(Hand{cards :[0;5].map(|_|deck.pull().unwrap())})
+    }
+
+    fn apply_info(mut self: Hand, info:Infomation) -> Hand {
+        self.cards = match info {
+            Infomation::Suit(suit) => {
+                self.cards.map(|c: Card|c.learn_suit(suit.as_u8()))
+            },
+            Infomation::Number(number) => {
+                self.cards.map(|c|c.learn_number(number.as_u8()))
+            },
+            Infomation::NotCard(card_value) => {
+                self.cards.map(|c|c.remove_option(&card_value))
+            }
+        };
+        self
+    }
+    
+    fn total_infomation(&self) -> f32 {
+        self.cards.map(|c:Card| c.missing_information_as_bits())
+            .iter().sum()
+    }
+
+    fn print(&self) {
+        self.cards.map(|c| {c.print(); println!("Woror")});
     }
 }
+
+fn how_much_info_gained(hand: Hand, info:Infomation) -> f32 {
+    hand.total_infomation() - 
+    hand.apply_info(info).total_infomation()
+}
+
 
 
 fn helper() {
@@ -93,13 +113,15 @@ fn ask_what_card(hand: Hand) -> Hand {
         .default(0)
         .interact()
         .unwrap() as u8;
-    return hand.map(|c| c.remove_option(&(number, suit)))
+    return hand.apply_info(Infomation::NotCard((number, suit)));
 }
 
 fn ask_which_number(hand: Hand) -> Hand {
+    use card::Number;
     const NUMBERS: [&str; 5] = ["0", "1", "2", "3", "4"];
-    match Select::with_theme(&ColorfulTheme::default()) .items(&NUMBERS).interact() {
-        Ok(suit) => hand.map(|c| c.learn_number(suit as u8)),
+    match Select::with_theme(&ColorfulTheme::default())
+    .items(&NUMBERS).interact() {
+        Ok(suit) => hand.apply_info(Infomation::Number(Number::all()[suit])),
         Err(e) => {
             print!("Error {e}");
             ask_which_number(hand)
@@ -108,43 +130,25 @@ fn ask_which_number(hand: Hand) -> Hand {
 }
 
 fn ask_which_suit(hand: Hand) -> Hand {
-    const SUITS: [&str; 5] = ["Red", "Orange", "Yellow", "Green", "Blue"];
     match Select::with_theme(&ColorfulTheme::default())
-        .items(&SUITS)
+        .items(&Suit::all().map(|s|s.as_str()))
+
         .default(0)
         .interact() {
-        Ok(suit) => hand.map(|c| c.learn_suit(suit as u8)),
-        Err(_) => ask_which_suit(hand)
+            Ok(suit) => hand.apply_info(Infomation::Suit(Suit::all()[suit])),
+            Err(_) => ask_which_suit(hand)
         }
 
 }
 
 fn main() {
-    let mut deck = Deck::new().shuffle();
-    let mut my_hand: [card::Card; 5] = [card::Card::new((0, 0)); 5];
-    let mut your_hand: [card::Card; 5] = [card::Card::new((0, 0)); 5];
-    for i in 0..5 {
-        print!("Pulling card {}", i);
-        my_hand[i] = deck.pull().unwrap();
-        your_hand[i] = deck.pull().unwrap();
-    }
-    
-    your_hand.map(|card| {
-            my_hand = my_hand.map(|c| c.remove_option(&card.value()));
-            card.is_value(*card.value())
-        });
+    let mut deck = Deck::new();
+    let mut my_hand = Hand::new_from_deck(&mut deck).unwrap();
+    let your_hand = Hand::new_from_deck(&mut deck).unwrap();
 
-    let (number1, _) = my_hand[0].value().clone();
-    let (_, suit2) = my_hand[1].value().clone();
-    
-    my_hand.iter()
-        .map(|c| c.learn_number(number1))   
-        .map(|c| c.learn_suit(suit2))
-        .for_each(|c| c.print());
-
-    // Drawing 5 new cards  
-    for i in 0..5 {
-        my_hand[i] = deck.pull().unwrap();
+    for card in your_hand.cards {
+        let tmp = my_hand.apply_info(Infomation::NotCard(card.clone().value));
+        my_hand = tmp;
     }
 
     loop {
@@ -152,11 +156,9 @@ fn main() {
             Ok(m) => println!("{:?}", m),
             Err(e) => println!("Error: {}", e),
         };
-        let info: f32 = my_hand.iter()
-            .map(|card| card.missing_information_as_bits())
-            .sum();
+        let info = my_hand.total_infomation();
         println!("Missing information: {info}");
-        my_hand.map(|c| c.print());
+        my_hand.print();
         my_hand = ask_information_type(my_hand);
     }
     

@@ -57,13 +57,17 @@ impl Deck {
     pub fn pull(&mut self) -> Option<Card> {
         return self.deck.pop()
     }
+
+    pub fn size(&self) -> usize {
+        self.deck.len()
+    }
 }
 
 type CardValue = (u8, u8);
 #[derive(Copy, Clone, Debug)]
 pub struct Card {
-    options: u32,
-    value: CardValue,
+    pub options: u32,
+    pub value: CardValue,
 }
 
 impl Card {
@@ -180,7 +184,7 @@ pub enum Suit {
 }
     
 impl Suit {
-    fn all() -> [Suit; 5]{
+    pub const fn all() -> [Suit; 5]{
         return [ 
             Suit::Red,
             Suit::Blue,
@@ -190,7 +194,17 @@ impl Suit {
         ]
     }
 
-    pub fn as_u8(&self) -> u8 {
+    pub const fn all_as_str() -> [&'static str; 5] {
+        [
+            "Red",
+            "Blue",
+            "White",
+            "Green",
+            "Yellow"
+        ]
+    }
+
+    pub const fn as_u8(&self) -> u8 {
         use Suit::*;
         match self {
             Red => 1,
@@ -200,6 +214,18 @@ impl Suit {
             Yellow => 5
         }
     }
+
+    pub const fn as_str(&self) -> &'static str {
+        use Suit::*;
+        match self {
+            Red => "Red",
+            Blue => "Blue",
+            White => "White",
+            Green => "Green",
+            Yellow => "Yellow"
+        }
+        
+}
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -212,7 +238,7 @@ pub enum Number {
 }
 
 impl Number {
-    fn all() -> [Number; 5] {
+    pub fn all() -> [Number; 5] {
         use Number::*;
         return [
             One,
