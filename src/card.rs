@@ -108,7 +108,7 @@ impl Card {
         if number < 5 {
             self.options &= !(Card::ONE << number); 
         } else {
-            panic!()
+            panic!("Tried to remove number that is to large: {number}, when max is 5")
         }
         self
     }
@@ -148,6 +148,9 @@ impl Card {
     }
     
     pub fn learn_number(self, number: u8) -> Self {
+        if number >= 5 {
+            panic!("number is too large");
+        }
         if self.value.0 == number {
             self.is_number(number)
         } else {
@@ -252,11 +255,11 @@ impl Number {
     pub fn as_u8(&self) -> u8 {
         use Number::*;
         return match self {
-            One => 1,
-            Two => 2,
-            Three => 3,
-            Four => 4,
-            Five => 5 // Wow such counting
+            One => 0,
+            Two => 1,
+            Three => 2,
+            Four => 3,
+            Five => 4 // Wow such counting
         }
     }
 }

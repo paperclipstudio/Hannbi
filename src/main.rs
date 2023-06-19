@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 const HAND_SIZE:usize = 5;
+
 mod card;
+use std::backtrace::{Backtrace, BacktraceStatus};
 use crate::card::{Deck, Suit};
 use std::process::Command;
 use card::Card;
@@ -16,6 +18,7 @@ enum Infomation {
     NotCard((u8, u8))
 }
 
+#[derive(Clone)]
 struct Hand {
     cards: [card::Card; 5]
 }
@@ -51,6 +54,11 @@ impl Hand {
 
     fn print(&self) {
         self.cards.map(|c| {c.print(); println!("Woror")});
+    }
+
+    pub fn how_much_info_gained(self, info:Infomation) -> f32 {
+        self.total_infomation() - 
+        self.apply_info(info).total_infomation()
     }
 }
 
@@ -119,8 +127,13 @@ fn ask_what_card(hand: Hand) -> Hand {
 fn ask_which_number(hand: Hand) -> Hand {
     use card::Number;
     const NUMBERS: [&str; 5] = ["0", "1", "2", "3", "4"];
+    let mut options: Vec<String> = Vec::new();
+    for num in 0..5 {
+        let info = hand.clone().how_much_info_gained(Infomation::Number(Number::all()[num]));
+        options.push(format!("{num}: {info}bits"))
+    }
     match Select::with_theme(&ColorfulTheme::default())
-    .items(&NUMBERS).interact() {
+    .items(&options).interact() {
         Ok(suit) => hand.apply_info(Infomation::Number(Number::all()[suit])),
         Err(e) => {
             print!("Error {e}");
@@ -160,6 +173,10 @@ fn main() {
         println!("Missing information: {info}");
         my_hand.print();
         my_hand = ask_information_type(my_hand);
+        let bt = Backtrace::capture();
+        if bt.status() == BacktraceStatus::Captured {
+            print!("{}", bt);
+        }
     }
     
 }
